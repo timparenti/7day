@@ -9,11 +9,11 @@
   .weekend { color: #ff3; }
   
   #dayColumn { background-color: #444; }
-  .tempHigh { font-weight: bold; font-size: 48pt; color: #ff3; text-shadow: 0.03em 0.03em 0.03em #222; }
-  .tempLow { font-weight: bold; font-size: 36pt; color: #66f; text-shadow: 0.03em 0.03em 0.03em #ccc; }
+  .tempHigh { font-weight: bold; font-size: 48pt; color: #ff3; text-shadow: 0.03em 0.03em 0.03em #222; height: 1em; text-align: center; vertical-align: middle; }
+  .tempLow { font-weight: bold; font-size: 36pt; color: #66f; text-shadow: 0.03em 0.03em 0.03em #ccc; height: 1em; text-align: center; vertical-align: middle; }
   
-  .normals { font-size: 16pt; color: #fff; text-shadow: 0.03em 0.03em 0.03em #222;}
-  .normalHigh, .normalLow { font-weight: bold; font-size: 24pt; color: #fff; text-shadow: 0.03em 0.03em 0.03em #222; filter: alpha(opacity=60); -moz-opacity:.60; opacity:.60; }
+  .normals { font-size: 16pt; color: #fff; text-shadow: 0.03em 0.03em 0.03em #222; margin: -0.25em 0; height: 1em; text-align: center; vertical-align: middle; }
+  .normalHigh, .normalLow { font-weight: bold; font-size: 24pt; color: #fff; text-shadow: 0.03em 0.03em 0.03em #222; height: 0.5em; filter: alpha(opacity=60); -moz-opacity:.60; opacity:.60; }
   .normalHigh { background-color: #991; }
   .normalLow { background-color: #44a; }
   
@@ -163,7 +163,7 @@ echo "<table cellpadding=0 cellspacing=0 width=100% height=100%><tr><td align=ce
       
       $columnHeight = 400;
       $mincolumnLoc = 20;
-      $maxcolumnLoc = 360;
+      $maxcolumnLoc = 355;
       echo "<td align=center valign=middle width=70>";
         echo "<div id=dayName>&nbsp;</div>\n";
         echo "<img src=\"spacer.png\" width=70 height=93>";
@@ -173,8 +173,8 @@ echo "<table cellpadding=0 cellspacing=0 width=100% height=100%><tr><td align=ce
           $columnLocMin = interpolate($minRelevantTemp,$maxRelevantTemp,$mincolumnLoc,$maxcolumnLoc,$normalMin);
           #$columnLocMid = ($columnLocMax + $columnLocMin) / 2;
           #echo "<div style=\"display: block; position: absolute; bottom: ".$columnLocMid."; right: 0; width: 100%; margin: 0;\" class=normals><center>Norms</center></div>";
-          echo "<div style=\"display: block; position: absolute; bottom: ".$columnLocMax."; left: 0; width: 100%; padding-right: 905px;\" class=normalHigh><center>".temp($normalMax)."</center></div>";
-          echo "<div style=\"display: block; position: absolute; bottom: ".$columnLocMin."; left: 0; width: 100%; padding-right: 905px;\" class=normalLow><center>".temp($normalMin)."</center></div>";
+          echo "<div style=\"display: block; position: absolute; bottom: ".$columnLocMax."; left: 0; width: 100%; padding-right: 905px;\" class=normalHigh><span>".temp($normalMax)."</span></div>";
+          echo "<div style=\"display: block; position: absolute; bottom: ".$columnLocMin."; left: 0; width: 100%; padding-right: 905px;\" class=normalLow><span>".temp($normalMin)."</span></div>";
             
         echo "</div>";
       echo "</td>";
@@ -201,7 +201,7 @@ echo "<table cellpadding=0 cellspacing=0 width=100% height=100%><tr><td align=ce
           echo "<div style=\"width: 100%; height: ".$columnHeight."px; position: relative;\">";
             
             $columnLoc = interpolate($minRelevantTemp,$maxRelevantTemp,$mincolumnLoc,$maxcolumnLoc,$forecast[$i]['temp']);
-              echo "<div style=\"display: block; position: absolute; bottom: ".$columnLoc."; right: 0; width: 200%; margin: 0 -50% 0 -50%;\" class=".$forecast[$i]['temp-type']."><center>".$forecast[$i]['temp']."</center></div>";
+              echo "<div style=\"display: block; position: absolute; bottom: ".$columnLoc."; width: 250%; margin: 0 -75%;\"><span class=".$forecast[$i]['temp-type'].">".$forecast[$i]['temp']."</span></div>";
             
           echo "</div>";
         echo "</td>\n\n";
