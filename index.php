@@ -17,6 +17,12 @@
   .normalHigh { background-color: #991; }
   .normalLow { background-color: #44a; }
   
+  #sunColumn { background-color: #555; }
+  .sunriseDate { color: #999; font-size: 20pt; text-transform: uppercase; margin: 0 0.2em 0 0.5em; text-shadow: 0.03em 0.03em 0.03em #222; height: 1em; }
+  .sunsetDate { color: #999; font-size: 20pt; text-transform: uppercase; margin: 0 0.2em 0 0.5em; text-shadow: 0.03em 0.03em 0.03em #222; height: 1em; }
+  .sunriseTime { color: #f93; font-weight: bold; font-size: 36pt; height: 1em; margin-right: 0.5em; text-shadow: 0.03em 0.03em 0.03em #222; height: 1em; }
+  .sunsetTime { color: #39f; font-weight: bold; font-size: 36pt; height: 1em; margin-right: 0.5em; text-shadow: 0.03em 0.03em 0.03em #222; height: 1em; }
+  
 </style>
 <title>Weather</title>
 </head>
@@ -127,6 +133,7 @@ for ($m = 1; $m <= 12; $m++) {
     
   }
 }
+# normals for 29 February aren't given, so use 28 February data
 $normalMaxArray[2][29] = $normalMaxArray[2][28];
 $normalMinArray[2][29] = $normalMinArray[2][28];
 
@@ -141,7 +148,7 @@ $normalMin = $normalMinArray[date("n")][date("j")];
 
 # load all forecast temps
 $allRelevantTemps = array_merge( $info['temperature']['maximum'],$info['temperature']['minimum'] );
-# add in the normals
+# add in the normals (so they still affect the scale if the forecast is WAY outside this range)
 $allRelevantTemps[] = $normalMax;
 $allRelevantTemps[] = $normalMin;
 
@@ -179,22 +186,40 @@ echo "<table cellpadding=0 cellspacing=0 width=100% height=100%><tr><td align=ce
         echo "</div>";
       echo "</td>";
       
+      echo "\n\n<!-- BEGIN FORECAST -->\n\n";
+      
+      # occasionally the source data shows 15 periods...
+      while (count($periodTimes) > 14) {
+        unset($periodTimes[0]);
+      }
+      # ... and occasionally it only shows 13
+      if (count($periodTimes) < 14) {
+        echo "<td align=center valign=middle width=36>";
+          echo "<div id=dayName>&nbsp;</div>\n";
+          echo "<img src=\"spacer.png\" width=36 height=93>\n";
+          echo "<div style=\"width: 100%; height: ".$columnHeight."px; position: relative;\"></div>";
+        echo "</td>\n\n";
+      }
+      
+      # for each period...
       foreach ($periodTimes as $i => $periodTime) {
         if (date("Gi",$periodTime) < 0600 || date("Gi",$periodTime) >= 1800) { $periodType[$i] = "N"; }
           else { $periodType[$i] = "D"; }
         
         switch ($periodType[$i]) {
-          case "D":
+          case "D":  # daytime period
+            echo "<!-- ".strtoupper(date("l, j F Y",$periodTime))." -->\n";
             echo "<td align=center valign=middle width=93 id=dayColumn>";
               echo "<div id=dayName";
                 if (date("N",$periodTime) >= 6) { echo " class=weekend"; }
               echo " title=\"".date("D j M",$periodTime)."\">".date("D",$periodTime)."</div>\n";
-                echo "<img src=\"".$forecast[$i]['icon']."\" width=93 height=93>";
+              echo "<img src=\"".$forecast[$i]['icon']."\" width=93 height=93>\n";
           break;
-          case "N":
+          case "N":  # nighttime period
+            echo "<!-- ".date("l",$periodTime)." night, ".date("j F Y",$periodTime)." -->\n";
             echo "<td align=center valign=middle width=36>";
               echo "<div id=dayName>&nbsp;</div>\n";
-                echo "<img src=\"spacer.png\" width=36 height=93>";
+              echo "<img src=\"spacer.png\" width=36 height=93>\n";
           break;
         }
         
@@ -205,36 +230,41 @@ echo "<table cellpadding=0 cellspacing=0 width=100% height=100%><tr><td align=ce
             
           echo "</div>";
         echo "</td>\n\n";
-      }
+      } # ...for each period
+      
+      echo "<!-- END FORECAST -->\n\n";
+      
     echo "</tr>";
-    /*echo "<tr>";
+    
+    echo "\n\n<!-- BEGIN SUN DATA -->\n\n";
+    
+    echo "<tr height=55>";
+      echo "<td colspan=1>&nbsp;</td>";
+      echo "<td colspan=14 id=sunColumn>";
       
-      $firstSunInfoDay = strtotime($forecast[$startDay]['dayName']." 12:00:00 -1 day");
-        # this is the day of sun info that "now" is assigned
-      
-      for ($i = 0; $i <= $displayDays - 1; $i++) {
-        $sunrise[$i] = date_sunrise(strtotime("+".$i." days",$firstSunInfoDay),SUNFUNCS_RET_TIMESTAMP,MY_GEO_LAT,MY_GEO_LON);
-        $sunset[$i] = date_sunset(strtotime("+".$i." days",$firstSunInfoDay),SUNFUNCS_RET_TIMESTAMP,MY_GEO_LAT,MY_GEO_LON);
+      for ($i = 0; $i <= 2; $i++) {
+        $sunTimes[$i]['rise'] = date_sunrise(strtotime("+".$i." days",time()),SUNFUNCS_RET_TIMESTAMP,MY_GEO_LAT,MY_GEO_LON);
+        $sunTimes[$i]['set'] = date_sunset(strtotime("+".$i." days",time()),SUNFUNCS_RET_TIMESTAMP,MY_GEO_LAT,MY_GEO_LON);
       }
       
-      #for ($i = $startSunInfoDay; $i <= $endDay - 1; $i++) {
-      for ($i = 0; $i <= $displayDays - 1; $i++) {
-        echo "<td align=center valign=middle style=\"font-family: Arial; font-weight: bold; font-size: 8pt;\">";
-          if (time() <= $sunrise[$i] + 60*90) {  # quit showing 90 min after sunrise
-            echo date("H:i",$sunrise[$i]);
-            echo "<span style=\"font-weight: normal;\">|</span>";
+      $j = 0;  # number of sun times shown thusfar
+      $jMax = 3;  # max to show
+      for ($i = 0; $i <= 2; $i++) {
+          if (time() <= $sunTimes[$i]['rise'] + 60*90 && $j < $jMax) {  # quit showing 90 min after sunrise
+            echo "<span class=sunriseDate>".date("D",$sunTimes[$i]['rise'])."</span><span class=sunriseTime>".date("H:i",$sunTimes[$i]['rise'])."</span>";
+            $j++;
           }
-          if (time() <= $sunset[$i] + 60*90) {  # quit showing 90 min after sunset
-            echo date("H:i",$sunset[$i]);
+          if (time() <= $sunTimes[$i]['set'] + 60*90 && $j < $jMax) {  # quit showing 90 min after sunset
+            echo "<span class=sunsetDate>".date("D",$sunTimes[$i]['set'])."</span><span class=sunsetTime>".date("H:i",$sunTimes[$i]['set'])."</span>";
+            $j++;
           }
-        echo "</td>";
       }
-      echo "<td align=right valign=middle>";
-        echo "<span style=\"font-family: Arial; font-weight: bold; font-size: 8pt;\">";
-        echo "<a href=\"http://www.weather.com/outlook/health/allergies/tenday/".MY_ZIPCODE."\" target=\"tjp_weather-com\" style=\"color: #666;\">forecast &raquo;</a>";
-        echo "</span>";
+      
       echo "</td>";
-    echo "</tr>";*/
+    echo "</tr>";
+    
+    echo "\n\n<!-- END SUN DATA -->\n\n";
+    
   echo "</table>";
 
 echo "<table>";
