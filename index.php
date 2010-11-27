@@ -146,15 +146,6 @@ $normalMinArray[2][29] = $normalMinArray[2][28];
 $normalMax = $normalMaxArray[date("n")][date("j")];
 $normalMin = $normalMinArray[date("n")][date("j")];
 
-# load all forecast temps
-$allRelevantTemps = array_merge( $info['temperature']['maximum'],$info['temperature']['minimum'] );
-# add in the normals (so they still affect the scale if the forecast is WAY outside this range)
-$allRelevantTemps[] = $normalMax;
-$allRelevantTemps[] = $normalMin;
-
-$maxRelevantTemp = max($allRelevantTemps);
-$minRelevantTemp = min($allRelevantTemps);
-
 #echo "<pre>";
 #print_r($info);
 #echo "</pre>";
@@ -167,6 +158,25 @@ echo "<table cellpadding=0 cellspacing=0 width=100% height=100%><tr><td align=ce
 
   echo "<table cellpadding=0 cellspacing=0 align=center valign=middle>";
     echo "<tr>\n\n";
+      
+      # occasionally the source data shows 15 periods...
+      while (count($periodTimes) > 14) {
+        unset($info['temperature']['maximum'][$periodTimes[0]]);
+        unset($info['temperature']['minimum'][$periodTimes[0]]);
+        unset($periodTimes[0]);
+      }
+      
+      # --------------more data massaging--------------
+      # load all forecast temps
+      $allRelevantTemps = array_merge( $info['temperature']['maximum'],$info['temperature']['minimum'] );
+      # add in the normals (so they still affect the scale if the forecast is WAY outside this range)
+      $allRelevantTemps[] = $normalMax;
+      $allRelevantTemps[] = $normalMin;
+      
+      # find the relevant range
+      $maxRelevantTemp = max($allRelevantTemps);
+      $minRelevantTemp = min($allRelevantTemps);
+      # --------------data massaging done--------------
       
       $columnHeight = 400;
       $mincolumnLoc = 20;
@@ -188,11 +198,7 @@ echo "<table cellpadding=0 cellspacing=0 width=100% height=100%><tr><td align=ce
       
       echo "\n\n<!-- BEGIN FORECAST -->\n\n";
       
-      # occasionally the source data shows 15 periods...
-      while (count($periodTimes) > 14) {
-        unset($periodTimes[0]);
-      }
-      # ... and occasionally it only shows 13
+      # ... occasionally the source data only shows 13 periods
       if (count($periodTimes) < 14) {
         echo "<td align=center valign=middle width=36>";
           echo "<div id=dayName>&nbsp;</div>\n";
