@@ -3,7 +3,7 @@
 <style>
   body { background-color: #333; font-family: Arial; color: #fff; margin: 0; }
   td { line-height: 1em; }
-  abbr { border-bottom: 0; }
+  /*abbr { border-bottom: 0; }*/
   
   #dayName { display: block; font-weight: bold; text-transform: uppercase; font-size: 24pt; margin: 10px; text-shadow: 0.03em 0.03em 0.03em #222; }
   .weekend { color: #ff3; }
@@ -18,10 +18,14 @@
   .normalLow { background-color: #44a; }
   
   #sunColumn { background-color: #555; }
-  .sunriseDate { color: #999; font-size: 20pt; text-transform: uppercase; margin: 0 0.2em 0 0.5em; text-shadow: 0.03em 0.03em 0.03em #222; height: 1em; }
-  .sunsetDate { color: #999; font-size: 20pt; text-transform: uppercase; margin: 0 0.2em 0 0.5em; text-shadow: 0.03em 0.03em 0.03em #222; height: 1em; }
-  .sunriseTime { color: #f93; font-weight: bold; font-size: 36pt; height: 1em; margin-right: 0.5em; text-shadow: 0.03em 0.03em 0.03em #222; height: 1em; }
-  .sunsetTime { color: #39f; font-weight: bold; font-size: 36pt; height: 1em; margin-right: 0.5em; text-shadow: 0.03em 0.03em 0.03em #222; height: 1em; }
+  .sunDate { color: #999; font-size: 20pt; text-transform: uppercase; margin: 0 0.2em 0 0.5em; text-shadow: 0.03em 0.03em 0.03em #222; }
+  .sunriseTime { color: #f93; font-weight: bold; font-size: 24pt; margin-right: 0.2em; text-shadow: 0.03em 0.03em 0.03em #222; line-height: 0.9em; }
+  .sunsetTime { color: #39f; font-weight: bold; font-size: 24pt; margin-right: 0.2em; text-shadow: 0.03em 0.03em 0.03em #222; line-height: 0.9em; }
+  .sunDayLength { color: #ccc; font-weight: bold; font-size: 16pt; margin-right: 1.5em; text-shadow: 0.03em 0.03em 0.03em #222; }
+  
+  #copyright, #copyright a { color: #666; font-size: 8.5pt; font-family: Tahoma, Arial; line-height: 1.1em; }
+  #copyright a:hover { color: #ccc; }
+  .buildDate { font-size: 7pt; }
   
 </style>
 <title>Weather</title>
@@ -48,6 +52,7 @@ $clim84Raw = file_get_contents($clim84URL);
 # ----------------------------------------
 # parse data
 
+$dataTimestamp    = strtotime($xml['dwml']['_c']['head']['_c']['product']['_c']['creation-date']['_v']);
 $timeLayoutsArray = $xml['dwml']['_c']['data']['_c']['time-layout'];
 $data             = $xml['dwml']['_c']['data']['_c']['parameters']['_c'];
 
@@ -56,9 +61,9 @@ for ($i = 0; $i < count($timeLayoutsArray); $i++) {
   $timeLayout[$keyName] = $timeLayoutsArray[$i]['_c']['start-valid-time'];
 }
 
-echo "<pre>";
+#echo "<pre>";
 #print_r($timeLayout['k-p24h-n7-1']);
-echo "</pre>";
+#echo "</pre>";
 
 foreach ($data as $type => $datum) {
   #echo "<pre><b>".$type."</b> ";
@@ -190,8 +195,8 @@ echo "<table cellpadding=0 cellspacing=0 width=100% height=100%><tr><td align=ce
           $columnLocMin = interpolate($minRelevantTemp,$maxRelevantTemp,$mincolumnLoc,$maxcolumnLoc,$normalMin);
           #$columnLocMid = ($columnLocMax + $columnLocMin) / 2;
           #echo "<div style=\"display: block; position: absolute; bottom: ".$columnLocMid."; right: 0; width: 100%; margin: 0;\" class=normals><center>Norms</center></div>";
-          echo "<div style=\"display: block; position: absolute; bottom: ".$columnLocMax."; left: 0; width: 100%; padding-right: 905px;\" class=normalHigh><span>".temp($normalMax)."</span></div>";
-          echo "<div style=\"display: block; position: absolute; bottom: ".$columnLocMin."; left: 0; width: 100%; padding-right: 905px;\" class=normalLow><span>".temp($normalMin)."</span></div>";
+          echo "<div style=\"display: block; position: absolute; bottom: ".$columnLocMax."; left: 0; width: 100%; padding-right: 905px;\" class=normalHigh><span>".formatTempDeg($normalMax)."</span></div>";
+          echo "<div style=\"display: block; position: absolute; bottom: ".$columnLocMin."; left: 0; width: 100%; padding-right: 905px;\" class=normalLow><span>".formatTempDeg($normalMin)."</span></div>";
             
         echo "</div>";
       echo "</td>";
@@ -232,7 +237,7 @@ echo "<table cellpadding=0 cellspacing=0 width=100% height=100%><tr><td align=ce
           echo "<div style=\"width: 100%; height: ".$columnHeight."px; position: relative;\">";
             
             $columnLoc = interpolate($minRelevantTemp,$maxRelevantTemp,$mincolumnLoc,$maxcolumnLoc,$forecast[$i]['temp']);
-              echo "<div style=\"display: block; position: absolute; bottom: ".$columnLoc."; width: 250%; margin: 0 -75%;\"><span class=".$forecast[$i]['temp-type'].">".$forecast[$i]['temp']."</span></div>";
+              echo "<div style=\"display: block; position: absolute; bottom: ".$columnLoc."; width: 250%; margin: 0 -75%;\"><span class=".$forecast[$i]['temp-type'].">".formatTempNum($forecast[$i]['temp'])."</span></div>";
             
           echo "</div>";
         echo "</td>\n\n";
@@ -244,27 +249,41 @@ echo "<table cellpadding=0 cellspacing=0 width=100% height=100%><tr><td align=ce
     
     echo "\n\n<!-- BEGIN SUN DATA -->\n\n";
     
-    echo "<tr height=55>";
+    echo "<tr height=65>";
       echo "<td colspan=1>&nbsp;</td>";
       echo "<td colspan=14 id=sunColumn>";
       
+      # generate the data...
       for ($i = 0; $i <= 2; $i++) {
         $sunTimes[$i]['rise'] = date_sunrise(strtotime("+".$i." days",time()),SUNFUNCS_RET_TIMESTAMP,MY_GEO_LAT,MY_GEO_LON);
         $sunTimes[$i]['set'] = date_sunset(strtotime("+".$i." days",time()),SUNFUNCS_RET_TIMESTAMP,MY_GEO_LAT,MY_GEO_LON);
+        $sunTimes[$i]['dayLength'] = $sunTimes[$i]['set'] - $sunTimes[$i]['rise'];
       }
       
-      $j = 0;  # number of sun times shown thusfar
-      $jMax = 3;  # max to show
+      # start showing data...
+      $j = 0;  # number of sun days shown thusfar
+      $jMax = 2;  # max to show
+      $timeDelay = 60*90;  # quit showing 90 min after sun event
+      
+      echo "<table><tr>";
+      # for each day...
       for ($i = 0; $i <= 2; $i++) {
-          if (time() <= $sunTimes[$i]['rise'] + 60*90 && $j < $jMax) {  # quit showing 90 min after sunrise
-            echo "<span class=sunriseDate>".date("D",$sunTimes[$i]['rise'])."</span><span class=sunriseTime>".date("H:i",$sunTimes[$i]['rise'])."</span>";
-            $j++;
-          }
-          if (time() <= $sunTimes[$i]['set'] + 60*90 && $j < $jMax) {  # quit showing 90 min after sunset
-            echo "<span class=sunsetDate>".date("D",$sunTimes[$i]['set'])."</span><span class=sunsetTime>".date("H:i",$sunTimes[$i]['set'])."</span>";
+          if (time() <= $sunTimes[$i]['set'] + $timeDelay && $j < $jMax) {
+            echo "<td valign=middle>";
+              echo "<span class=sunDate title=\"".date("D j M",$sunTimes[$i]['rise'])."\">".date("D",$sunTimes[$i]['rise'])."</span>";
+            echo "</td>";
+            echo "<td valign=middle>";
+              echo "<span class=sunriseTime title=\"".date("D j M, H:i:s T",$sunTimes[$i]['rise'])."\">".date("H:i",$sunTimes[$i]['rise'])."</span>";
+              echo "<br>";
+              echo "<span class=sunsetTime title=\"".date("D j M, H:i:s T",$sunTimes[$i]['set'])."\">".date("H:i",$sunTimes[$i]['set'])."</span>";
+            echo "</td>";
+            echo "<td valign=middle>";
+              echo "<span class=sunDayLength>".gmdate("G:i\'s\"",$sunTimes[$i]['dayLength'])."</span>";
+            echo "</td>";
             $j++;
           }
       }
+      echo "</tr></table>";
       
       echo "</td>";
     echo "</tr>";
@@ -273,14 +292,40 @@ echo "<table cellpadding=0 cellspacing=0 width=100% height=100%><tr><td align=ce
     
   echo "</table>";
 
+  # =======================================================================
+  # =======================================================================
+  echo "<span id=copyright>";
+    define(LAUNCH_YEAR,2010);
+    echo "Forecast data and weather icons from the <a href=\"http://www.weather.gov/forecasts/xml/SOAP_server/ndfdXML.htm\" target=\"nws_ndfd\">National Digital Forecast Database</a>, courtesy of the <a href=\"http://www.weather.gov/\" target=\"nws_main\">National Weather Service</a>.";
+    echo "  ";
+    echo "Forecast data presented is for <b><abbr title=\"".MY_GEO_LAT.", ".MY_GEO_LON."\">".MY_LOCALE."</abbr>,</b> loaded ".date("D j M Y, H:i T",$dataTimestamp)." (".gmdate("d/Hi",$dataTimestamp)."Z).";
+    echo "<br>";
+    echo "Seasonal normal temperatures courtesy of the <a href=\"http://www.ncdc.noaa.gov/oa/ncdc.html\" target=\"ncdc_main\">National Climatic Data Center</a>.";
+    echo "  ";
+    echo "Sun data calculated from geographical location.";
+    echo "  ";
+    echo "Graphical representation <b>&copy;";
+    if (date("Y") != LAUNCH_YEAR) { echo LAUNCH_YEAR."&ndash;".date("Y"); } else { echo LAUNCH_YEAR; }
+    echo ",</b> <a href=\"http://www.timparenti.com/\">Timothy J Parenti</a>; all rights reserved.";
+    echo "<div class=buildDate>rev. ".date("Y-m-d H:i:s T",filemtime("weather-full.php"))."</div>";
+  echo "</span>";
+
 echo "<table>";
 
 
 
 # FUNCTIONS ============================================================
 
-function temp($t) {
-  return $t."&deg;";
+function formatTempNum($t) {
+  if ($t >= 0) {
+    return $t;
+  }
+  else {
+    return "&ndash;".abs($t);
+  }
+}
+function formatTempDeg($t) {
+  return formatTempNum($t)."&deg;";
 }
 function interpolate($src1,$src2,$plot1,$plot2,$srcRef) {
     # will "erroneously" EXTRApolate if given a reference outside the bounds, so be careful!
