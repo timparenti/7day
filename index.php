@@ -28,13 +28,13 @@
   .buildDate { font-size: 7pt; }
   
 </style>
-<title>Weather</title>
+<title>7-Day Weather Forecast</title>
 </head>
 <body>
 <?php
 
-require_once("lib/my_locale.php");
-require_once("../lib/xml2array.php");
+require_once("../../lib/my_locale.php");
+require_once("../../lib/xml2array.php");
 putenv("TZ=".MY_TIMEZONE);
 
 echo "<meta http-equiv=refresh content=\"2700\">";   # refresh this every 45 minutes
@@ -195,8 +195,8 @@ echo "<table cellpadding=0 cellspacing=0 width=100% height=100%><tr><td align=ce
           $columnLocMin = interpolate($minRelevantTemp,$maxRelevantTemp,$mincolumnLoc,$maxcolumnLoc,$normalMin);
           #$columnLocMid = ($columnLocMax + $columnLocMin) / 2;
           #echo "<div style=\"display: block; position: absolute; bottom: ".$columnLocMid."; right: 0; width: 100%; margin: 0;\" class=normals><center>Norms</center></div>";
-          echo "<div style=\"display: block; position: absolute; bottom: ".$columnLocMax."; left: 0; width: 100%; padding-right: 905px;\" class=normalHigh><span>".formatTempDeg($normalMax)."</span></div>";
-          echo "<div style=\"display: block; position: absolute; bottom: ".$columnLocMin."; left: 0; width: 100%; padding-right: 905px;\" class=normalLow><span>".formatTempDeg($normalMin)."</span></div>";
+          echo "<div style=\"display: block; position: absolute; bottom: ".$columnLocMax."; left: 0; width: 100%; padding-right: 905px;\" class=normalHigh><span title=\"Normal High for ".date("j M")."... ".formatTempFC($normalMax)."\">".formatTempDeg($normalMax)."</span></div>";
+          echo "<div style=\"display: block; position: absolute; bottom: ".$columnLocMin."; left: 0; width: 100%; padding-right: 905px;\" class=normalLow><span title=\"Normal Low for ".date("j M")."... ".formatTempFC($normalMin)."\">".formatTempDeg($normalMin)."</span></div>";
             
         echo "</div>";
       echo "</td>";
@@ -235,11 +235,20 @@ echo "<table cellpadding=0 cellspacing=0 width=100% height=100%><tr><td align=ce
         }
         
           echo "<div style=\"width: 100%; height: ".$columnHeight."px; position: relative;\">";
-            
             $columnLoc = interpolate($minRelevantTemp,$maxRelevantTemp,$mincolumnLoc,$maxcolumnLoc,$forecast[$i]['temp']);
-              echo "<div style=\"display: block; position: absolute; bottom: ".$columnLoc."; width: 250%; margin: 0 -75%;\"><span class=".$forecast[$i]['temp-type'].">".formatTempNum($forecast[$i]['temp'])."</span></div>";
             
+            switch ($periodType[$i]) {
+              case "D":  # daytime period
+                $dateName = date("D j M",$periodTime);
+                echo "<div style=\"display: block; position: absolute; bottom: ".$columnLoc."; width: 250%; margin: 0 -75%;\"><span class=".$forecast[$i]['temp-type']." title=\"High for ".$dateName."... ".formatTempFC($forecast[$i]['temp'])."\">".formatTempNum($forecast[$i]['temp'])."</span></div>";
+              break;   
+              case "N":  # nighttime period
+                $dateName = date("D j M",$periodTime);
+                echo "<div style=\"display: block; position: absolute; bottom: ".$columnLoc."; width: 250%; margin: 0 -75%;\"><span class=".$forecast[$i]['temp-type']." title=\"Low for ".$dateName."... ".formatTempFC($forecast[$i]['temp'])."\">".formatTempNum($forecast[$i]['temp'])."</span></div>";
+              break;
+            }
           echo "</div>";
+          
         echo "</td>\n\n";
       } # ...for each period
       
@@ -268,20 +277,21 @@ echo "<table cellpadding=0 cellspacing=0 width=100% height=100%><tr><td align=ce
       echo "<table><tr>";
       # for each day...
       for ($i = 0; $i <= 2; $i++) {
-          if (time() <= $sunTimes[$i]['set'] + $timeDelay && $j < $jMax) {
-            echo "<td valign=middle>";
-              echo "<span class=sunDate title=\"".date("D j M",$sunTimes[$i]['rise'])."\">".date("D",$sunTimes[$i]['rise'])."</span>";
-            echo "</td>";
-            echo "<td valign=middle>";
-              echo "<span class=sunriseTime title=\"".date("D j M, H:i:s T",$sunTimes[$i]['rise'])."\">".date("H:i",$sunTimes[$i]['rise'])."</span>";
-              echo "<br>";
-              echo "<span class=sunsetTime title=\"".date("D j M, H:i:s T",$sunTimes[$i]['set'])."\">".date("H:i",$sunTimes[$i]['set'])."</span>";
-            echo "</td>";
-            echo "<td valign=middle>";
-              echo "<span class=sunDayLength>".gmdate("G:i\'s\"",$sunTimes[$i]['dayLength'])."</span>";
-            echo "</td>";
-            $j++;
-          }
+        if (time() <= $sunTimes[$i]['set'] + $timeDelay && $j < $jMax) {
+          echo "\n\n<!-- ".date("l, j F Y",$sunTimes[$i]['rise'])." -->\n";
+          echo "<td valign=middle>";
+            echo "<span class=sunDate title=\"".date("D j M",$sunTimes[$i]['rise'])."\">".date("D",$sunTimes[$i]['rise'])."</span>";
+          echo "</td>";
+          echo "<td valign=middle>";
+            echo "<span class=sunriseTime title=\"".date("D j M, H:i:s T",$sunTimes[$i]['rise'])."\">".date("H:i",$sunTimes[$i]['rise'])."</span>";
+            echo "<br>";
+            echo "<span class=sunsetTime title=\"".date("D j M, H:i:s T",$sunTimes[$i]['set'])."\">".date("H:i",$sunTimes[$i]['set'])."</span>";
+          echo "</td>";
+          echo "<td valign=middle>";
+            echo "<span class=sunDayLength title=\"Day length for ".date("D j M",$sunTimes[$i]['rise'])."... ".gmdate("G \h, i \m, s \s",$sunTimes[$i]['dayLength'])."\">".gmdate("G:i\'s\"",$sunTimes[$i]['dayLength'])."</span>";
+          echo "</td>";
+          $j++;
+        }
       }
       echo "</tr></table>";
       
@@ -307,7 +317,7 @@ echo "<table cellpadding=0 cellspacing=0 width=100% height=100%><tr><td align=ce
     echo "Graphical representation <b>&copy;";
     if (date("Y") != LAUNCH_YEAR) { echo LAUNCH_YEAR."&ndash;".date("Y"); } else { echo LAUNCH_YEAR; }
     echo ",</b> <a href=\"http://www.timparenti.com/\">Timothy J Parenti</a>; all rights reserved.";
-    echo "<div class=buildDate>rev. ".date("Y-m-d H:i:s T",filemtime("weather-full.php"))."</div>";
+    echo "<div class=buildDate>rev. ".date("Y-m-d H:i:s T",filemtime("index.php"))."</div>";
   echo "</span>";
 
 echo "<table>";
@@ -324,9 +334,16 @@ function formatTempNum($t) {
     return "&ndash;".abs($t);
   }
 }
+
 function formatTempDeg($t) {
   return formatTempNum($t)."&deg;";
 }
+
+function formatTempFC($f) {
+  $c = round(($f - 32) / 1.8, 0);
+  return formatTempDeg($f)."F (".formatTempDeg($c)."C)";
+}
+
 function interpolate($src1,$src2,$plot1,$plot2,$srcRef) {
     # will "erroneously" EXTRApolate if given a reference outside the bounds, so be careful!
     $srcDiff = $src2 - $src1;
