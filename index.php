@@ -33,8 +33,8 @@
 <body>
 <?php
 
-require_once("../../lib/my_locale.php");
-require_once("../../lib/xml2array.php");
+require_once("locale.php");
+require_once("lib/xml2array.php");
 date_default_timezone_set(MY_TIMEZONE);
 
 echo "<meta http-equiv=refresh content=\"2700\">";   # refresh this every 45 minutes
