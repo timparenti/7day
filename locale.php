@@ -5,11 +5,11 @@
     http://cdo.ncdc.noaa.gov/cgi-bin/climatenormals/climatenormals.pl?directive=prod_select2&prodtype=CLIM84&subrnum=
   */
 
-  define("MY_LOCALE","Pittsburgh, PA");  # Shadyside
+  define("MY_LOCALE","Pittsburgh, PA");  # Sennott Square
   define("MY_TIMEZONE","America/New_York");
-  define("MY_ZIPCODE","15232");
-  define("MY_GEO_LAT",40.45185);
-  define("MY_GEO_LON",-79.92870);
+  define("MY_ZIPCODE","15213");
+  define("MY_GEO_LAT",40.44157);
+  define("MY_GEO_LON",-79.95630);
   define("MY_CLIM84","PA/PA366993");
   define("MY_ICAO","KPIT");
   
