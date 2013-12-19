@@ -44,7 +44,8 @@ echo "<meta http-equiv=refresh content=\"2700\">";   # refresh this every 45 min
 
 $restURL = "http://www.weather.gov/forecasts/xml/SOAP_server/ndfdXMLclient.php?whichClient=NDFDgenLatLonList&lat=&lon=&listLatLon=".MY_GEO_LAT."%2C".MY_GEO_LON."&lat1=&lon1=&lat2=&lon2=&resolutionSub=&listLat1=&listLon1=&listLat2=&listLon2=&resolutionList=&endPoint1Lat=&endPoint1Lon=&endPoint2Lat=&endPoint2Lon=&listEndPoint1Lat=&listEndPoint1Lon=&listEndPoint2Lat=&listEndPoint2Lon=&zipCodeList=&listZipCodeList=&centerPointLat=&centerPointLon=&distanceLat=&distanceLon=&resolutionSquare=&listCenterPointLat=&listCenterPointLon=&listDistanceLat=&listDistanceLon=&listResolutionSquare=&citiesLevel=&listCitiesLevel=&sector=&gmlListLatLon=&featureType=&requestedTime=&startTime=&endTime=&compType=&propertyName=&product=time-series&maxt=maxt&mint=mint&temp=temp&qpf=qpf&pop12=pop12&snow=snow&dew=dew&wspd=wspd&wdir=wdir&sky=sky&wx=wx&icons=icons&rh=rh&appt=appt&wwa=wwa&wgust=wgust&Submit=Submit";
 
-$xml = xml2ary(file_get_contents($restURL));
+$restData = file_get_contents($restURL);
+$xml = xml2ary($restData);
 
 $clim84URL = "http://cdo.ncdc.noaa.gov/climatenormals/clim84/".MY_CLIM84.".txt";
 $clim84Raw = file_get_contents($clim84URL);
@@ -66,37 +67,46 @@ for ($i = 0; $i < count($timeLayoutsArray); $i++) {
 #echo "</pre>";
 
 foreach ($data as $type => $datum) {
+  if ($type != "temperature" && $type != "weather" && $type != "conditions-icon") {
+    # Not doing anything with the other data for now
+    continue;
+  }
   #echo "<pre><b>".$type."</b> ";
   #print_r($datum);
   #echo "</pre>";
   if (!isset($datum[0])) { $datum[0] = $datum; }
   for ($i = 0; $i < count($datum); $i++) {
     
-    $subtype = $datum[$i]['_a']['type'];
     # load time layout
-    for ($j = 0; $j < count($timeLayout[$datum[$i]['_a']['time-layout']]); $j++) {
-      $times[$j] = strtotime($timeLayout[$datum[$i]['_a']['time-layout']][$j]['_v']);
-      #$times[$j] =           $timeLayout[$datum[$i]['_a']['time-layout']][$j]['_v'] ;
+    if (isset($datum[$i]) && isset($timeLayout[$datum[$i]['_a']['time-layout']])) {
+      for ($j = 0; $j < count($timeLayout[$datum[$i]['_a']['time-layout']]); $j++) {
+        $times[$j] = strtotime($timeLayout[$datum[$i]['_a']['time-layout']][$j]['_v']);
+        #$times[$j] =           $timeLayout[$datum[$i]['_a']['time-layout']][$j]['_v'] ;
+      }
     }
     # assign data to time layout
-    switch ($type) {
-      case 'weather':
-        for ($j = 0; $j < count($datum[$i]['_c']['weather-conditions']); $j++) {
-          $info[$type][$subtype][$times[$j]] = $datum[$i]['_c']['weather-conditions'][$j]['_c']['value'];
-        } break;
-      case 'conditions-icon':
-        for ($j = 0; $j < count($datum[$i]['_c']['icon-link']); $j++) {
-          $info[$type][$subtype][$times[$j]] = $datum[$i]['_c']['icon-link'][$j]['_v'];
-        } break;
-      case 'hazards':
-        for ($j = 0; $j < count($datum[$i]['_c']['hazard-conditions']); $j++) {
-          $info[$type][$subtype][$times[$j]] = $datum[$i]['_c']['hazard-conditions'][$j]['_v'];
-        } break;
-      default:
-        for ($j = 0; $j < count($datum[$i]['_c']['value']); $j++) {
-          $info[$type][$subtype][$times[$j]] = $datum[$i]['_c']['value'][$j]['_v'];
-        }
-    } # switch()
+    if (isset($datum[$i]['_a']['type'])) {
+      $subtype = $datum[$i]['_a']['type'];
+      
+      switch ($type) {
+        case 'weather':
+          for ($j = 0; $j < count($datum[$i]['_c']['weather-conditions']); $j++) {
+            $info[$type][$subtype][$times[$j]] = $datum[$i]['_c']['weather-conditions'][$j]['_c']['value'];
+          } break;
+        case 'conditions-icon':
+          for ($j = 0; $j < count($datum[$i]['_c']['icon-link']); $j++) {
+            $info[$type][$subtype][$times[$j]] = $datum[$i]['_c']['icon-link'][$j]['_v'];
+          } break;
+        case 'hazards':
+          for ($j = 0; $j < count($datum[$i]['_c']['hazard-conditions']); $j++) {
+            $info[$type][$subtype][$times[$j]] = $datum[$i]['_c']['hazard-conditions'][$j]['_v'];
+          } break;
+        default:
+          for ($j = 0; $j < count($datum[$i]['_c']['value']); $j++) {
+            $info[$type][$subtype][$times[$j]] = $datum[$i]['_c']['value'][$j]['_v'];
+          }
+      } # switch()
+    }
     
   } # for($i)
 } # foreach($data)
@@ -117,7 +127,9 @@ foreach ($periodTimes as $i => $periodTime) {
     $forecast[$i]['temp-type'] = "tempLow";
   }
   
-  $forecast[$i]['icon'] = $info['conditions-icon']['forecast-NWS'][$periodTime];
+  if (isset($info['conditions-icon']['forecast-NWS'][$periodTime])) {
+    $forecast[$i]['icon'] = $info['conditions-icon']['forecast-NWS'][$periodTime];
+  }
   
 }
 
@@ -305,7 +317,7 @@ echo "<table cellpadding=0 cellspacing=0 width=100% height=100%><tr><td align=ce
   # =======================================================================
   # =======================================================================
   echo "<span id=copyright>";
-    define(LAUNCH_YEAR,2010);
+    define("LAUNCH_YEAR",2010);
     echo "Forecast data and weather icons from the <a href=\"http://www.weather.gov/forecasts/xml/SOAP_server/ndfdXML.htm\" target=\"nws_ndfd\">National Digital Forecast Database</a>, courtesy of the <a href=\"http://www.weather.gov/\" target=\"nws_main\">National Weather Service</a>.";
     echo "  ";
     echo "Forecast data presented is for <b><abbr title=\"".MY_GEO_LAT.", ".MY_GEO_LON."\">".MY_LOCALE."</abbr>,</b> loaded ".date("D j M Y, H:i T",$dataTimestamp)." (".gmdate("d/Hi",$dataTimestamp)."Z).";
