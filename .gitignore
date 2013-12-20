@@ -1,2 +1,6 @@
+# Informational files
 z_shell
+
+# Apache error log
+error_log
 
