@@ -171,6 +171,13 @@ $normalMin = $normalMinArray[date("n")][date("j")];
 # ----------------------------------------
 # display data
 
+if (!isset($_GET['units'])) {
+  $_GET['units'] = 'F';
+}
+elseif ($_GET['units'] != 'F') {
+  exit("Unsupported units...");
+}
+
 echo "<table cellpadding=0 cellspacing=0 width=100% height=100%><tr><td align=center valign=middle>";
 
   echo "<table cellpadding=0 cellspacing=0 align=center valign=middle>";
@@ -352,8 +359,12 @@ function formatTempDeg($t) {
 }
 
 function formatTempFC($f) {
+  return formatTempDeg($f)."F (".formatTempDeg(convertTempFC($f))."C)";
+}
+
+function convertTempFC($f) {
   $c = round(($f - 32) / 1.8, 0);
-  return formatTempDeg($f)."F (".formatTempDeg($c)."C)";
+  return $c;
 }
 
 function interpolate($src1,$src2,$plot1,$plot2,$srcRef) {

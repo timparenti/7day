@@ -7,11 +7,11 @@
 
 # Basic location selection...
 
-if (!isset($_GET[zip])) {
-  $_GET[zip] = 15213;  # default to Pittsburgh
+if (!isset($_GET['zip'])) {
+  $_GET['zip'] = 15213;  # default to Pittsburgh
 }
 
-if ($_GET[zip] == 15213) {
+if ($_GET['zip'] == 15213) {
   define("MY_LOCALE","Pittsburgh, PA");  # Sennott Square
   define("MY_TIMEZONE","America/New_York");
   define("MY_ZIPCODE","15213");
@@ -20,7 +20,7 @@ if ($_GET[zip] == 15213) {
   define("MY_CLIM84","PA/PA366993");
   define("MY_ICAO","KPIT");
 }
-elseif ($_GET[zip] == 16417) {  
+elseif ($_GET['zip'] == 16417) {  
   define("MY_LOCALE","Girard, PA");
   define("MY_TIMEZONE","America/New_York");
   define("MY_ZIPCODE","16417");
