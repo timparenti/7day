@@ -174,7 +174,7 @@ $normalMin = $normalMinArray[date("n")][date("j")];
 if (!isset($_GET['units'])) {
   $_GET['units'] = 'F';
 }
-elseif ($_GET['units'] != 'F') {
+elseif ($_GET['units'] != 'F' && $_GET['units'] != 'C') {
   exit("Unsupported units...");
 }
 
@@ -214,8 +214,8 @@ echo "<table cellpadding=0 cellspacing=0 width=100% height=100%><tr><td align=ce
           $columnLocMin = interpolate($minRelevantTemp,$maxRelevantTemp,$mincolumnLoc,$maxcolumnLoc,$normalMin);
           #$columnLocMid = ($columnLocMax + $columnLocMin) / 2;
           #echo "<div style=\"display: block; position: absolute; bottom: ".$columnLocMid."; right: 0; width: 100%; margin: 0;\" class=normals><center>Norms</center></div>";
-          echo "<div style=\"display: block; position: absolute; bottom: ".$columnLocMax."; left: 0; width: 100%; padding-right: 905px;\" class=normalHigh><span title=\"Normal High for ".date("j M")."... ".formatTempFC($normalMax)."\">".formatTempDeg($normalMax)."</span></div>";
-          echo "<div style=\"display: block; position: absolute; bottom: ".$columnLocMin."; left: 0; width: 100%; padding-right: 905px;\" class=normalLow><span title=\"Normal Low for ".date("j M")."... ".formatTempFC($normalMin)."\">".formatTempDeg($normalMin)."</span></div>";
+          echo "<div style=\"display: block; position: absolute; bottom: ".$columnLocMax."; left: 0; width: 100%; padding-right: 905px;\" class=normalHigh><span title=\"Normal High for ".date("j M")."... ".displayTempAlt($normalMax)."\">".displayTempDeg($normalMax)."</span></div>";
+          echo "<div style=\"display: block; position: absolute; bottom: ".$columnLocMin."; left: 0; width: 100%; padding-right: 905px;\" class=normalLow><span title=\"Normal Low for ".date("j M")."... ".displayTempAlt($normalMin)."\">".displayTempDeg($normalMin)."</span></div>";
             
         echo "</div>";
       echo "</td>";
@@ -259,11 +259,11 @@ echo "<table cellpadding=0 cellspacing=0 width=100% height=100%><tr><td align=ce
             switch ($periodType[$i]) {
               case "D":  # daytime period
                 $dateName = date("D j M",$periodTime);
-                echo "<div style=\"display: block; position: absolute; bottom: ".$columnLoc."; width: 250%; margin: 0 -75%;\"><span class=".$forecast[$i]['temp-type']." title=\"High for ".$dateName."... ".formatTempFC($forecast[$i]['temp'])."\">".formatTempNum($forecast[$i]['temp'])."</span></div>";
+                echo "<div style=\"display: block; position: absolute; bottom: ".$columnLoc."; width: 250%; margin: 0 -75%;\"><span class=".$forecast[$i]['temp-type']." title=\"High for ".$dateName."... ".displayTempAlt($forecast[$i]['temp'])."\">".displayTemp($forecast[$i]['temp'])."</span></div>";
               break;   
               case "N":  # nighttime period
                 $dateName = date("D j M",$periodTime);
-                echo "<div style=\"display: block; position: absolute; bottom: ".$columnLoc."; width: 250%; margin: 0 -75%;\"><span class=".$forecast[$i]['temp-type']." title=\"Low for ".$dateName."... ".formatTempFC($forecast[$i]['temp'])."\">".formatTempNum($forecast[$i]['temp'])."</span></div>";
+                echo "<div style=\"display: block; position: absolute; bottom: ".$columnLoc."; width: 250%; margin: 0 -75%;\"><span class=".$forecast[$i]['temp-type']." title=\"Low for ".$dateName."... ".displayTempAlt($forecast[$i]['temp'])."\">".displayTemp($forecast[$i]['temp'])."</span></div>";
               break;
             }
           echo "</div>";
@@ -367,6 +367,49 @@ function convertTempFC($f) {
   return $c;
 }
 
+function displayTemp($f, $degreeSymbol=false, $alternateUnits=false) {
+  switch ($_GET['units']) {
+    case 'C':
+      $temp['main']['value'] = convertTempFC($f);
+      $temp['main']['units'] = 'C';
+      $temp['alt']['value'] = $f;
+      $temp['alt']['units'] = 'F';
+      break;
+    case 'F':
+    default:
+      $temp['main']['value'] = $f;
+      $temp['main']['units'] = 'F';
+      $temp['alt']['value'] = convertTempFC($f);
+      $temp['alt']['units'] = 'C';
+      break;
+  }
+  
+  # Use minus sign for negative values
+  if ($temp['main']['value'] < 0) {
+    $temp['main']['value'] = "&minus;".abs($temp['main']['value']);
+  }
+  if ($temp['alt']['value'] < 0) {
+    $temp['alt']['value'] = "&minus;".abs($temp['alt']['value']);
+  }
+  
+  if (!$degreeSymbol && !$alternateUnits) {
+    return $temp['main']['value'];
+  }
+  if ($degreeSymbol && !$alternateUnits) {
+    return $temp['main']['value']."&deg;";
+  }
+  if ($alternateUnits) {
+    return $temp['main']['value']." &deg;".$temp['main']['units']." (".$temp['alt']['value']." &deg;".$temp['alt']['units'].")";
+  }
+}
+
+function displayTempDeg($f) {
+  return displayTemp($f, true, false);
+}
+
+function displayTempAlt($f) {
+  return displayTemp($f, true, true);
+}
 function interpolate($src1,$src2,$plot1,$plot2,$srcRef) {
     # will "erroneously" EXTRApolate if given a reference outside the bounds, so be careful!
     $srcDiff = $src2 - $src1;
