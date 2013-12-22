@@ -25,6 +25,7 @@
   
   #copyright, #copyright a { color: #666; font-size: 8.5pt; font-family: Tahoma, Arial; line-height: 1.1em; }
   #copyright a:hover { color: #ccc; }
+  .paramControl { margin: 0 0.5em; }
   .buildDate { font-size: 7pt; }
   
 </style>
@@ -336,6 +337,9 @@ echo "<table cellpadding=0 cellspacing=0 width=100% height=100%><tr><td align=ce
     echo "Graphical representation <b>&copy;";
     if (date("Y") != LAUNCH_YEAR) { echo LAUNCH_YEAR."&ndash;".date("Y"); } else { echo LAUNCH_YEAR; }
     echo ",</b> <a href=\"http://www.timparenti.com/\">Timothy J Parenti</a>; all rights reserved.";
+    echo "<br>";
+    echo "<span class=paramControl><b>Location:</b> <a href=\"./?zip=15213&units=".$_GET['units']."\">Pittsburgh, PA</a> | <a href=\"./?zip=16417&units=".$_GET['units']."\">Girard, PA</a></span>";
+    echo "<span class=paramControl><b>Units:</b> <a href=\"./?zip=".$_GET['zip']."&units=F\">&deg;F</a> | <a href=\"./?zip=".$_GET['zip']."&units=C\">&deg;C</a></span>";
     echo "<div class=buildDate>rev. ".date("Y-m-d H:i:s T",filemtime("index.php"))."</div>";
   echo "</span>";
 
