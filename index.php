@@ -131,6 +131,11 @@ foreach ($periodTimes as $i => $periodTime) {
   if (isset($info['conditions-icon']['forecast-NWS'][$periodTime])) {
     $forecast[$i]['icon'] = $info['conditions-icon']['forecast-NWS'][$periodTime];
   }
+  elseif ($i == 0) {
+    # time for first period has passed, so use first available icon
+    $iconTimes = array_keys($info['conditions-icon']['forecast-NWS']);
+    $forecast[$i]['icon'] = $info['conditions-icon']['forecast-NWS'][$iconTimes[0]];
+  }
   
 }
 
