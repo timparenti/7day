@@ -202,6 +202,10 @@ echo "<table cellpadding=0 cellspacing=0 width=100% height=100%><tr><td align=ce
       # add in the normals (so they still affect the scale if the forecast is WAY outside this range)
       $allRelevantTemps[] = $normalMax;
       $allRelevantTemps[] = $normalMin;
+      # convert relevant temps to specified units
+      foreach ($allRelevantTemps as $i => $relevantTemp) {
+        $allRelevantTemps[$i] = tempValue($relevantTemp);
+      }
       
       # find the relevant range
       $maxRelevantTemp = max($allRelevantTemps);
@@ -216,8 +220,8 @@ echo "<table cellpadding=0 cellspacing=0 width=100% height=100%><tr><td align=ce
         echo "<img src=\"spacer.png\" width=70 height=93>";
         echo "<div style=\"width: 100%; height: ".$columnHeight."px; position: relative;\">";
           
-          $columnLocMax = interpolate($minRelevantTemp,$maxRelevantTemp,$mincolumnLoc,$maxcolumnLoc,$normalMax);
-          $columnLocMin = interpolate($minRelevantTemp,$maxRelevantTemp,$mincolumnLoc,$maxcolumnLoc,$normalMin);
+          $columnLocMax = interpolate($minRelevantTemp,$maxRelevantTemp,$mincolumnLoc,$maxcolumnLoc,tempValue($normalMax));
+          $columnLocMin = interpolate($minRelevantTemp,$maxRelevantTemp,$mincolumnLoc,$maxcolumnLoc,tempValue($normalMin));
           #$columnLocMid = ($columnLocMax + $columnLocMin) / 2;
           #echo "<div style=\"display: block; position: absolute; bottom: ".$columnLocMid."; right: 0; width: 100%; margin: 0;\" class=normals><center>Norms</center></div>";
           echo "<div style=\"display: block; position: absolute; bottom: ".$columnLocMax."; left: 0; width: 100%; padding-right: 905px;\" class=normalHigh><span title=\"Normal High for ".date("j M")."... ".displayTempAlt($normalMax)."\">".displayTempDeg($normalMax)."</span></div>";
@@ -260,7 +264,7 @@ echo "<table cellpadding=0 cellspacing=0 width=100% height=100%><tr><td align=ce
         }
         
           echo "<div style=\"width: 100%; height: ".$columnHeight."px; position: relative;\">";
-            $columnLoc = interpolate($minRelevantTemp,$maxRelevantTemp,$mincolumnLoc,$maxcolumnLoc,$forecast[$i]['temp']);
+            $columnLoc = interpolate($minRelevantTemp,$maxRelevantTemp,$mincolumnLoc,$maxcolumnLoc,tempValue($forecast[$i]['temp']));
             
             switch ($periodType[$i]) {
               case "D":  # daytime period
@@ -354,26 +358,21 @@ echo "<table>";
 
 # FUNCTIONS ============================================================
 
-function formatTempNum($t) {
-  if ($t >= 0) {
-    return $t;
-  }
-  else {
-    return "&ndash;".abs($t);
-  }
-}
-
-function formatTempDeg($t) {
-  return formatTempNum($t)."&deg;";
-}
-
-function formatTempFC($f) {
-  return formatTempDeg($f)."F (".formatTempDeg(convertTempFC($f))."C)";
-}
-
 function convertTempFC($f) {
   $c = round(($f - 32) / 1.8, 0);
   return $c;
+}
+
+function tempValue($f) {
+  switch ($_GET['units']) {
+    case 'C':
+      return convertTempFC($f);
+      break;
+    case 'F':
+    default:
+      return $f;
+      break;
+  }
 }
 
 function displayTemp($f, $degreeSymbol=false, $alternateUnits=false) {
