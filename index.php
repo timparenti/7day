@@ -317,7 +317,7 @@ echo "<table cellpadding=0 cellspacing=0 width=100% height=100%><tr><td align=ce
             echo "<span class=sunsetTime title=\"".date("D j M, H:i:s T",$sunTimes[$i]['set'])."\">".date("H:i",$sunTimes[$i]['set'])."</span>";
           echo "</td>";
           echo "<td valign=middle>";
-            echo "<span class=sunDayLength title=\"Day length for ".date("D j M",$sunTimes[$i]['rise'])."... ".gmdate("G \h, i \m, s \s",$sunTimes[$i]['dayLength'])."\">".gmdate("G:i\'s\"",$sunTimes[$i]['dayLength'])."</span>";
+            echo "<span class=sunDayLength title=\"Day length for ".date("D j M",$sunTimes[$i]['rise'])."... ".gmdate("G \h, i \m, s \s",$sunTimes[$i]['dayLength'])."\">".gmdate("G:i&#x2032;s&#x2033;",$sunTimes[$i]['dayLength'])."</span>";
           echo "</td>";
           $j++;
         }
